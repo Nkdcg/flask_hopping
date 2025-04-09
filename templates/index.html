@@ -1,33 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flask Hopping Communication</title>
+    <title>Secure Text & Audio Sender</title>
 </head>
 <body>
-    <h2>Send Message</h2>
-    <form id="textForm">
-        <input type="text" id="textInput" name="text" placeholder="Enter text" required>
+    <h2>🔐 Send Encrypted Text</h2>
+    <form action="/send_text" method="post">
+        <input type="text" name="text" required placeholder="Enter message">
         <button type="submit">Send</button>
     </form>
-    <p id="response"></p>
 
-    <script>
-        const form = document.getElementById("textForm");
-        const response = document.getElementById("response");
-
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const text = document.getElementById("textInput").value;
-
-            const res = await fetch("/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: text })
-            });
-
-            const data = await res.json();
-            response.textContent = data.response;
-        };
-    </script>
+    <h2>🔊 Upload Audio File</h2>
+    <form action="/upload_audio" method="post" enctype="multipart/form-data">
+        <input type="file" name="audio" accept="audio/*" required>
+        <button type="submit">Upload</button>
+    </form>
 </body>
 </html>
