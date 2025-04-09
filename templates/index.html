@@ -15,5 +15,33 @@
         <input type="file" name="audio" accept="audio/*" required>
         <button type="submit">Upload</button>
     </form>
+
+    <h2>🛡️ Simulate Attacks</h2>
+<form id="simulationForm">
+    <label><input type="checkbox" id="jamming"> Simulate Jamming</label><br>
+    <label><input type="checkbox" id="eavesdropping"> Simulate Eavesdropping</label><br>
+    <button type="submit">Save Simulation Flags</button>
+</form>
+
+<p id="simStatus"></p>
+
+<script>
+    document.getElementById("simulationForm").onsubmit = async (e) => {
+        e.preventDefault();
+
+        const simulate_jamming = document.getElementById("jamming").checked;
+        const simulate_eavesdropping = document.getElementById("eavesdropping").checked;
+
+        const res = await fetch('/set_simulation_flags', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ simulate_jamming, simulate_eavesdropping })
+        });
+
+        const data = await res.json();
+        document.getElementById("simStatus").textContent = data.status;
+    };
+</script>
+
 </body>
 </html>

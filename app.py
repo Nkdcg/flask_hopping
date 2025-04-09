@@ -36,5 +36,20 @@ def upload_audio():
     audio.save(os.path.join(SHARED_FOLDER, 'uploaded_audio.wav'))
     return "✅ Audio uploaded successfully."
 
+@app.route('/set_simulation_flags', methods=['POST'])
+def set_simulation_flags():
+    data = request.get_json()
+    flags = {
+        "simulate_jamming": data.get("simulate_jamming", False),
+        "simulate_eavesdropping": data.get("simulate_eavesdropping", False)
+    }
+
+    flags_path = os.path.join(SHARED_FOLDER, 'simulation_flags.json')
+    with open(flags_path, 'w') as f:
+        json.dump(flags, f)
+
+    return jsonify({"status": "✅ Simulation flags saved successfully."})
+
+
 if __name__ == '__main__':
     app.run(debug=True)
