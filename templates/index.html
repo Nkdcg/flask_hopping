@@ -1,47 +1,49 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Secure Text & Audio Sender</title>
+  <meta charset="UTF-8">
+  <title>Wireless Stealth Comm</title>
 </head>
 <body>
-    <h2>🔐 Send Encrypted Text</h2>
-    <form action="/send_text" method="post">
-        <input type="text" name="text" required placeholder="Enter message">
-        <button type="submit">Send</button>
-    </form>
+  <h2>📡 Send Secure Message</h2>
+  <form action="/send_text" method="post">
+    <input type="text" name="text" placeholder="Enter message here" required>
+    <button type="submit">🔐 Send Text</button>
+  </form>
 
-    <h2>🔊 Upload Audio File</h2>
-    <form action="/upload_audio" method="post" enctype="multipart/form-data">
-        <input type="file" name="audio" accept="audio/*" required>
-        <button type="submit">Upload</button>
-    </form>
+  <h2>🎧 Upload Audio</h2>
+  <form action="/upload_audio" method="post" enctype="multipart/form-data">
+    <input type="file" name="audio" accept="audio/*" required>
+    <button type="submit">⬆️ Upload Audio</button>
+  </form>
 
-    <h2>🛡️ Simulate Attacks</h2>
-<form id="simulationForm">
+  <h2>🔁 Set Hopping Config</h2>
+  <form action="/set_hopping_config" method="post">
+    <input type="number" name="start_freq" placeholder="Start Frequency (e.g., 1000)" required>
+    <input type="number" step="0.1" name="hop_interval" placeholder="Hop Interval (e.g., 2.5s)" required>
+    <button type="submit">💾 Save TFH Config</button>
+  </form>
+
+  <h2>🛡️ Set Simulation Flags</h2>
+  <form id="flagsForm">
     <label><input type="checkbox" id="jamming"> Simulate Jamming</label><br>
-    <label><input type="checkbox" id="eavesdropping"> Simulate Eavesdropping</label><br>
-    <button type="submit">Save Simulation Flags</button>
-</form>
+    <label><input type="checkbox" id="eavesdrop"> Simulate Eavesdropping</label><br>
+    <button type="button" onclick="setFlags()">✅ Set Flags</button>
+  </form>
 
-<p id="simStatus"></p>
-
-<script>
-    document.getElementById("simulationForm").onsubmit = async (e) => {
-        e.preventDefault();
-
-        const simulate_jamming = document.getElementById("jamming").checked;
-        const simulate_eavesdropping = document.getElementById("eavesdropping").checked;
-
-        const res = await fetch('/set_simulation_flags', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ simulate_jamming, simulate_eavesdropping })
-        });
-
-        const data = await res.json();
-        document.getElementById("simStatus").textContent = data.status;
-    };
-</script>
-
+  <script>
+    function setFlags() {
+      fetch("/set_simulation_flags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          simulate_jamming: document.getElementById("jamming").checked,
+          simulate_eavesdropping: document.getElementById("eavesdrop").checked
+        })
+      })
+      .then(res => res.json())
+      .then(data => alert(data.status));
+    }
+  </script>
 </body>
 </html>
