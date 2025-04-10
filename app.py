@@ -3,7 +3,7 @@ import os
 import json
 
 app = Flask(__name__)
-SHARED_FOLDER = os.path.join(os.path.expanduser('~'), 'Downloads', 'flask_hopping_project', 'shared_data')
+SHARED_FOLDER = os.path.join(os.path.expanduser('~'), 'Documents', 'flask_hopping_project', 'shared_data')
 os.makedirs(SHARED_FOLDER, exist_ok=True)
 
 TEXT_FILE = os.path.join(SHARED_FOLDER, 'text_message.txt')
