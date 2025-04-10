@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 import os
 import json
 import subprocess
+from datetime import datetime
 
 app = Flask(__name__)
 SHARED_FOLDER = os.path.join(os.path.expanduser('~'), 'Documents', 'flask_hopping_project', 'shared_data')
@@ -12,22 +13,20 @@ AUDIO_FILE = os.path.join(SHARED_FOLDER, 'uploaded_audio.wav')
 FLAGS_FILE = os.path.join(SHARED_FOLDER, 'simulation_flags.json')
 CONFIG_FILE = os.path.join(SHARED_FOLDER, 'hopping_config.json')
 
+GIT_REPO_PATH = os.path.abspath(os.path.join(SHARED_FOLDER, '..'))
 
-def auto_push_to_github():
+def auto_git_push(commit_msg):
     try:
-        repo_path = os.path.join(os.path.expanduser('~'), 'Documents', 'flask_hopping_project')
-        subprocess.run(['git', '-C', repo_path, 'add', '.'])
-        subprocess.run(['git', '-C', repo_path, 'commit', '-m', '🔁 Auto: New message or config sent'], check=True)
-        subprocess.run(['git', '-C', repo_path, 'push', 'origin', 'main'], check=True)
-        print("✅ Auto pushed updates to GitHub.")
-    except Exception as e:
+        subprocess.run(["git", "add", "."], cwd=GIT_REPO_PATH, check=True)
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=GIT_REPO_PATH, check=True)
+        subprocess.run(["git", "push"], cwd=GIT_REPO_PATH, check=True)
+        print("✅ Auto-pushed to GitHub.")
+    except subprocess.CalledProcessError as e:
         print(f"❌ Git push failed: {e}")
-
 
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/send_text', methods=['POST'])
 def send_text():
@@ -36,25 +35,26 @@ def send_text():
         key = 'eceproject2025'
         encrypted = bytearray()
         for i, char in enumerate(text):
-            encrypted.append(ord(char) ^ ord(key[i % len(key)]))
+            encrypted_char = ord(char) ^ ord(key[i % len(key)])
+            encrypted.append(encrypted_char)
+
         with open(TEXT_FILE, 'wb') as f:
             f.write(encrypted)
-        auto_push_to_github()
-        return "✅ Text encrypted and saved."
+
+        auto_git_push(f"🔒 Encrypted text committed @ {datetime.now().strftime('%H:%M:%S')}")
+        return "✅ Text encrypted, saved and pushed."
     except Exception as e:
         return f"❌ Error saving text: {e}"
-
 
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
     try:
         audio = request.files['audio']
         audio.save(AUDIO_FILE)
-        auto_push_to_github()
-        return "✅ Audio uploaded."
+        auto_git_push(f"🔊 Audio uploaded @ {datetime.now().strftime('%H:%M:%S')}")
+        return "✅ Audio uploaded and pushed."
     except Exception as e:
         return f"❌ Error uploading audio: {e}"
-
 
 @app.route('/set_simulation_flags', methods=['POST'])
 def set_simulation_flags():
@@ -66,11 +66,11 @@ def set_simulation_flags():
         }
         with open(FLAGS_FILE, 'w') as f:
             json.dump(flags, f)
-        auto_push_to_github()
+
+        auto_git_push(f"🚨 Simulation flags updated @ {datetime.now().strftime('%H:%M:%S')}")
         return jsonify({"status": "flags saved"}), 200
     except Exception as e:
         return jsonify({"status": f"error saving flags: {e}"}), 400
-
 
 @app.route('/set_hopping_config', methods=['POST'])
 def set_hopping_config():
@@ -83,11 +83,11 @@ def set_hopping_config():
         }
         with open(CONFIG_FILE, 'w') as f:
             json.dump(config, f)
-        auto_push_to_github()
-        return "✅ Hopping config saved."
+
+        auto_git_push(f"⚙️ Hopping config updated @ {datetime.now().strftime('%H:%M:%S')}")
+        return "✅ Hopping config saved and pushed."
     except Exception as e:
         return f"❌ Error saving config: {e}"
-
 
 if __name__ == '__main__':
     app.run(debug=True)
