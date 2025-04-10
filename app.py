@@ -15,12 +15,13 @@ CONFIG_FILE = os.path.join(SHARED_FOLDER, 'hopping_config.json')
 
 def auto_push_to_github():
     try:
-        subprocess.run(["git", "add", "."], cwd=SHARED_FOLDER)
-        subprocess.run(["git", "commit", "-m", "Auto: Update from Flask"], cwd=SHARED_FOLDER)
-        subprocess.run(["git", "push", "origin", "main"], cwd=SHARED_FOLDER)
-        print("✅ Auto-push to GitHub done.")
+        repo_path = os.path.join(os.path.expanduser('~'), 'Documents', 'flask_hopping_project')
+        subprocess.run(['git', '-C', repo_path, 'add', '.'])
+        subprocess.run(['git', '-C', repo_path, 'commit', '-m', '🔁 Auto: New message or config sent'], check=True)
+        subprocess.run(['git', '-C', repo_path, 'push', 'origin', 'main'], check=True)
+        print("✅ Auto pushed updates to GitHub.")
     except Exception as e:
-        print("❌ Git push failed:", e)
+        print(f"❌ Git push failed: {e}")
 
 
 @app.route('/')
