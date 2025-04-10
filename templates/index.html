@@ -1,93 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📡 Secure Wireless Transmission</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📡 Secure Wireless Communication</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #f0f4ff, #e6f0ff);
-      padding: 20px;
-      color: #333;
+      margin: 0;
+      padding: 2rem;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #e3f2fd, #f8f9fa);
     }
-    h2 {
-      background: #007BFF;
-      color: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    h1 {
+      color: #007bff;
+      text-align: center;
     }
-    form {
-      margin-bottom: 20px;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    .card {
       background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
     }
     input, button {
-      margin: 10px 5px 5px 0;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
       font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
     button {
-      background-color: #28a745;
+      background-color: #007bff;
       color: white;
       border: none;
-      cursor: pointer;
     }
     button:hover {
-      background-color: #218838;
+      background-color: #0056b3;
+    }
+    label {
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
-  <h2>🔐 Send Encrypted Message</h2>
-  <form action="/send_text" method="post" onsubmit="runAutoHop()">
-    <input type="text" name="text" placeholder="Enter message" required>
-    <button type="submit">Send Message 🔒</button>
-  </form>
 
-  <h2>🎵 Upload Audio File</h2>
-  <form action="/upload_audio" method="post" enctype="multipart/form-data">
-    <input type="file" name="audio" accept="audio/*" required>
-    <button type="submit">Upload Audio 🎧</button>
-  </form>
+<h1>🔐 Secure Wireless Transmission Portal</h1>
 
-  <h2>⚙️ Configure Frequency Hopping</h2>
-  <form action="/set_hopping_config" method="post">
-    <input type="number" name="start_freq" placeholder="Start Frequency (Hz)" required>
-    <input type="number" step="0.1" name="hop_interval" placeholder="Hop Interval (sec)" required>
-    <button type="submit">Save TFH Config ⚙️</button>
-  </form>
+<div class="grid">
+  <div class="card">
+    <h3>🔐 Send Encrypted Text</h3>
+    <form action="/send_text" method="post" onsubmit="runAutoHop()">
+      <input type="text" name="text" placeholder="Type your message..." required>
+      <button type="submit">Send 🔒</button>
+    </form>
+  </div>
 
-  <h2>🛡️ Simulation Controls</h2>
-  <form id="flagsForm">
-    <label><input type="checkbox" id="jamming"> Simulate Jamming 🛰️</label><br>
-    <label><input type="checkbox" id="eavesdrop"> Simulate Eavesdropping 👀</label><br>
-    <button type="button" onclick="setFlags()">Set Flags ✅</button>
-  </form>
+  <div class="card">
+    <h3>🎧 Upload Audio</h3>
+    <form action="/upload_audio" method="post" enctype="multipart/form-data">
+      <input type="file" name="audio" accept="audio/*" required>
+      <button type="submit">Upload 🎵</button>
+    </form>
+  </div>
 
-  <script>
-    function setFlags() {
-      fetch("/set_simulation_flags", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          simulate_jamming: document.getElementById("jamming").checked,
-          simulate_eavesdropping: document.getElementById("eavesdrop").checked
-        })
+  <div class="card">
+    <h3>⚙️ Frequency Hopping Settings</h3>
+    <form action="/set_hopping_config" method="post">
+      <input type="number" name="start_freq" placeholder="Start Frequency (Hz)" required>
+      <input type="number" step="0.1" name="hop_interval" placeholder="Hop Interval (sec)" required>
+      <button type="submit">Save Settings ⚙️</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>🛡️ Simulate Attack</h3>
+    <form id="flagsForm">
+      <label><input type="checkbox" id="jamming"> Simulate Jamming</label><br>
+      <label><input type="checkbox" id="eavesdrop"> Simulate Eavesdropping</label><br>
+      <button type="button" onclick="setFlags()">Submit Flags ✅</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function setFlags() {
+    fetch("/set_simulation_flags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        simulate_jamming: document.getElementById("jamming").checked,
+        simulate_eavesdropping: document.getElementById("eavesdrop").checked
       })
-      .then(res => res.json())
-      .then(data => alert("✅ " + data.status));
-    }
+    })
+    .then(res => res.json())
+    .then(data => alert('✅ ' + data.status));
+  }
 
-    function runAutoHop() {
-      // Automatically trigger MATLAB hopping logic if hosted
-      fetch("https://your-matlab-hopping-endpoint.com/hop-now").catch(() => {});
-    }
-  </script>
+  function runAutoHop() {
+    fetch("https://your-matlab-hopping-endpoint.com/hop-now").catch(() => {});
+  }
+</script>
+
 </body>
 </html>

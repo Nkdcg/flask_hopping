@@ -42,14 +42,18 @@ def upload_audio():
 
 @app.route('/set_simulation_flags', methods=['POST'])
 def set_simulation_flags():
-    data = request.get_json()
-    flags = {
-        "simulate_jamming": data.get("simulate_jamming", False),
-        "simulate_eavesdropping": data.get("simulate_eavesdropping", False)
-    }
-    with open(FLAGS_FILE, 'w') as f:
-        json.dump(flags, f)
-    return jsonify({"status": "flags saved"}), 200
+    try:
+        data = request.get_json(force=True)
+        flags = {
+            "simulate_jamming": bool(data.get("simulate_jamming", False)),
+            "simulate_eavesdropping": bool(data.get("simulate_eavesdropping", False))
+        }
+        with open(FLAGS_FILE, 'w') as f:
+            json.dump(flags, f)
+        return jsonify({"status": "flags saved"}), 200
+    except Exception as e:
+        return jsonify({"status": f"error saving flags: {e}"}), 400
+
 
 @app.route('/set_hopping_config', methods=['POST'])
 def set_hopping_config():
