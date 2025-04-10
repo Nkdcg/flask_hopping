@@ -3,58 +3,43 @@ import os
 import json
 
 app = Flask(__name__)
-
-# 📁 Shared folder path
-SHARED_FOLDER = os.path.join(os.getcwd(), "shared_data")
+SHARED_FOLDER = os.path.join(os.path.expanduser('~'), 'Downloads', 'flask_hopping_project', 'shared_data')
 os.makedirs(SHARED_FOLDER, exist_ok=True)
 
-# 🔐 XOR Encryption
-def xor_encrypt(text, key):
-    encrypted = bytearray()
-    for i, char in enumerate(text):
-        encrypted_char = ord(char) ^ ord(key[i % len(key)])
-        encrypted.append(encrypted_char)
-    return encrypted
+TEXT_FILE = os.path.join(SHARED_FOLDER, 'text_message.txt')
+AUDIO_FILE = os.path.join(SHARED_FOLDER, 'uploaded_audio.wav')
+FLAGS_FILE = os.path.join(SHARED_FOLDER, 'simulation_flags.json')
+CONFIG_FILE = os.path.join(SHARED_FOLDER, 'hopping_config.json')
 
-# ⬆️ Push file to GitHub
-def push_to_github(filename, commit_message):
-    os.chdir(os.getcwd())
-    os.system(f'git add shared_data/{filename}')
-    os.system(f'git commit -m "{commit_message}"')
-    os.system('git push origin main')
-
-# 🏠 Home route
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# ✉️ Send encrypted text
 @app.route('/send_text', methods=['POST'])
 def send_text():
-    text = request.form.get('text')
-    key = 'eceproject2025'
-    encrypted = xor_encrypt(text, key)
+    try:
+        text = request.form['text']
+        key = 'eceproject2025'
+        encrypted = bytearray()
+        for i, char in enumerate(text):
+            encrypted_char = ord(char) ^ ord(key[i % len(key)])
+            encrypted.append(encrypted_char)
 
-    text_path = os.path.join(SHARED_FOLDER, 'text_message.txt')
-    with open(text_path, 'wb') as f:
-        f.write(encrypted)
+        with open(TEXT_FILE, 'wb') as f:
+            f.write(encrypted)
+        return "✅ Text encrypted and saved."
+    except Exception as e:
+        return f"❌ Error saving text: {e}"
 
-    push_to_github('text_message.txt', 'Update encrypted text')
-    return '✅ Text encrypted & pushed to GitHub.'
-
-# 🎵 Upload audio
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
-    if 'audio' not in request.files:
-        return "❌ No audio file part", 400
-    audio = request.files['audio']
-    audio_path = os.path.join(SHARED_FOLDER, 'uploaded_audio.wav')
-    audio.save(audio_path)
+    try:
+        audio = request.files['audio']
+        audio.save(AUDIO_FILE)
+        return "✅ Audio uploaded."
+    except Exception as e:
+        return f"❌ Error uploading audio: {e}"
 
-    push_to_github('uploaded_audio.wav', 'Update audio file')
-    return "✅ Audio uploaded & pushed to GitHub."
-
-# 🛡️ Save simulation flags
 @app.route('/set_simulation_flags', methods=['POST'])
 def set_simulation_flags():
     data = request.get_json()
@@ -62,14 +47,24 @@ def set_simulation_flags():
         "simulate_jamming": data.get("simulate_jamming", False),
         "simulate_eavesdropping": data.get("simulate_eavesdropping", False)
     }
-
-    flags_path = os.path.join(SHARED_FOLDER, 'simulation_flags.json')
-    with open(flags_path, 'w') as f:
+    with open(FLAGS_FILE, 'w') as f:
         json.dump(flags, f)
+    return jsonify({"status": "flags saved"}), 200
 
-    push_to_github('simulation_flags.json', 'Update simulation flags')
-    return jsonify({"status": "✅ Simulation flags saved & pushed to GitHub."})
+@app.route('/set_hopping_config', methods=['POST'])
+def set_hopping_config():
+    try:
+        start_freq = int(request.form['start_freq'])
+        hop_interval = float(request.form['hop_interval'])
+        config = {
+            "start_freq": start_freq,
+            "hop_interval": hop_interval
+        }
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(config, f)
+        return "✅ Hopping config saved."
+    except Exception as e:
+        return f"❌ Error saving config: {e}"
 
-# 🚀 Run Flask
 if __name__ == '__main__':
     app.run(debug=True)
