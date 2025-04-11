@@ -15,23 +15,41 @@ CONFIG_FILE = os.path.join(SHARED_FOLDER, 'hopping_config.json')
 
 GIT_REPO_PATH = os.path.abspath(os.path.join(SHARED_FOLDER, '..'))
 
-def auto_git_push(commit_msg):
-    try:
-        # Stage all files
-        subprocess.run(["git", "add", "."], cwd=GIT_REPO_PATH, check=True)
+GITHUB_USER = "Nkdcg"
+REPO_NAME = "flask_hopping"
+BRANCH = "main"
+TOKEN = os.environ.get("GITHUB_TOKEN")  # set in Render Environment
+GITHUB_API = f"https://api.github.com/repos/{GITHUB_USER}/{REPO_NAME}/contents/shared_data"
 
-        # Check if there is anything to commit
-        result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=GIT_REPO_PATH)
-        if result.returncode == 0:
-            print("ℹ️ No changes to commit.")
-            return
+# === Upload File to GitHub via API ===
+def github_api_push(filename, content, message):
+    url = f"{GITHUB_API}/{filename}"
+    headers = {
+        "Authorization": f"token {TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }
 
-        # Commit and push only if changes exist
-        subprocess.run(["git", "commit", "-m", commit_msg], cwd=GIT_REPO_PATH, check=True)
-        subprocess.run(["git", "push"], cwd=GIT_REPO_PATH, check=True)
-        print("✅ Auto-pushed to GitHub.")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Git push failed: {e}")
+    # Check if file exists to get SHA
+    sha = None
+    r = requests.get(url, headers=headers)
+    if r.status_code == 200:
+        sha = r.json()['sha']
+
+    # Encode file content
+    encoded = base64.b64encode(content).decode('utf-8')
+    payload = {
+        "message": message,
+        "content": encoded,
+        "branch": BRANCH
+    }
+    if sha:
+        payload["sha"] = sha
+
+    res = requests.put(url, headers=headers, json=payload)
+    if res.status_code in [200, 201]:
+        print("✅ File pushed to GitHub:", filename)
+    else:
+        print("❌ GitHub push failed:", res.text)
 
 
 @app.route('/')
