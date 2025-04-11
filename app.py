@@ -7,7 +7,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# === Path Setup ===
+# === File Paths ===
 SHARED_FOLDER = os.path.join(os.path.expanduser('~'), 'Documents', 'flask_hopping_project', 'shared_data')
 os.makedirs(SHARED_FOLDER, exist_ok=True)
 
@@ -16,11 +16,12 @@ AUDIO_FILE = os.path.join(SHARED_FOLDER, 'uploaded_audio.wav')
 FLAGS_FILE = os.path.join(SHARED_FOLDER, 'simulation_flags.json')
 CONFIG_FILE = os.path.join(SHARED_FOLDER, 'hopping_config.json')
 
-# === GitHub Config ===
-REPO_NAME = "flask_hopping"
+# === GitHub Info ===
 GITHUB_USERNAME = "Nkdcg"
+REPO_NAME = "flask_hopping"
 BRANCH = "main"
 
+# === GitHub Push Function ===
 def github_api_push(file_path, commit_message):
     token = os.getenv("GITHUB_TOKEN")
     if not token:
@@ -28,23 +29,25 @@ def github_api_push(file_path, commit_message):
         return
 
     file_name = os.path.basename(file_path)
-    api_url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents/shared_data/{file_name}"
+    url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents/shared_data/{file_name}"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json"
+    }
 
     try:
+        # Read and encode file
         with open(file_path, 'rb') as f:
             encoded = base64.b64encode(f.read()).decode()
 
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json"
-        }
-
-        # Get existing file SHA if exists
+        # Check if file already exists to get SHA
         sha = None
-        get_res = requests.get(api_url, headers=headers)
+        get_res = requests.get(url, headers=headers)
         if get_res.status_code == 200:
             sha = get_res.json().get('sha')
 
+        # Create or update file on GitHub
         payload = {
             "message": commit_message,
             "content": encoded,
@@ -53,21 +56,20 @@ def github_api_push(file_path, commit_message):
         if sha:
             payload["sha"] = sha
 
-        put_res = requests.put(api_url, headers=headers, json=payload)
-
+        put_res = requests.put(url, headers=headers, json=payload)
         if put_res.status_code in [200, 201]:
             print(f"✅ {file_name} pushed to GitHub")
         else:
             print(f"❌ Failed to push {file_name}: {put_res.text}")
 
     except Exception as e:
-        print(f"❌ Exception during push: {e}")
+        print(f"❌ Exception pushing {file_name}: {e}")
 
+# === Routes ===
 
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/send_text', methods=['POST'])
 def send_text():
@@ -76,28 +78,26 @@ def send_text():
         key = 'eceproject2025'
         encrypted = bytearray()
         for i, char in enumerate(text):
-            encrypted_char = ord(char) ^ ord(key[i % len(key)])
-            encrypted.append(encrypted_char)
+            encrypted.append(ord(char) ^ ord(key[i % len(key)]))
 
         with open(TEXT_FILE, 'wb') as f:
             f.write(encrypted)
 
-        github_api_push(TEXT_FILE, f"🔒 Text updated @ {datetime.now().strftime('%H:%M:%S')}")
+        github_api_push(TEXT_FILE, f"🔒 Text committed @ {datetime.now().strftime('%H:%M:%S')}")
         return "✅ Text encrypted and pushed."
     except Exception as e:
         return f"❌ Error saving text: {e}"
-
 
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
     try:
         audio = request.files['audio']
         audio.save(AUDIO_FILE)
+
         github_api_push(AUDIO_FILE, f"🔊 Audio uploaded @ {datetime.now().strftime('%H:%M:%S')}")
         return "✅ Audio uploaded and pushed."
     except Exception as e:
         return f"❌ Error uploading audio: {e}"
-
 
 @app.route('/set_simulation_flags', methods=['POST'])
 def set_simulation_flags():
@@ -107,6 +107,7 @@ def set_simulation_flags():
             "simulate_jamming": bool(data.get("simulate_jamming", False)),
             "simulate_eavesdropping": bool(data.get("simulate_eavesdropping", False))
         }
+
         with open(FLAGS_FILE, 'w') as f:
             json.dump(flags, f)
 
@@ -115,16 +116,17 @@ def set_simulation_flags():
     except Exception as e:
         return jsonify({"status": f"error saving flags: {e}"}), 400
 
-
 @app.route('/set_hopping_config', methods=['POST'])
 def set_hopping_config():
     try:
         start_freq = int(request.form['start_freq'])
         hop_interval = float(request.form['hop_interval'])
+
         config = {
             "start_freq": start_freq,
             "hop_interval": hop_interval
         }
+
         with open(CONFIG_FILE, 'w') as f:
             json.dump(config, f)
 
@@ -133,6 +135,6 @@ def set_hopping_config():
     except Exception as e:
         return f"❌ Error saving config: {e}"
 
-
+# === Run App ===
 if __name__ == '__main__':
     app.run(debug=True)
