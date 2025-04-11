@@ -1,1 +1,4 @@
-shared_data/*
+shared_data/text_message.txt
+shared_data/uploaded_audio.wav
+shared_data/hopping_config.json
+shared_data/simulation_flags.json
