@@ -7,7 +7,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# === File Paths ===
+# === File & Repo Configuration ===
 SHARED_FOLDER = os.path.join(os.path.expanduser('~'), 'Documents', 'flask_hopping_project', 'shared_data')
 os.makedirs(SHARED_FOLDER, exist_ok=True)
 
@@ -16,12 +16,11 @@ AUDIO_FILE = os.path.join(SHARED_FOLDER, 'uploaded_audio.wav')
 FLAGS_FILE = os.path.join(SHARED_FOLDER, 'simulation_flags.json')
 CONFIG_FILE = os.path.join(SHARED_FOLDER, 'hopping_config.json')
 
-# === GitHub Info ===
 GITHUB_USERNAME = "Nkdcg"
 REPO_NAME = "flask_hopping"
 BRANCH = "main"
 
-# === GitHub Push Function ===
+# === Push File to GitHub ===
 def github_api_push(file_path, commit_message):
     token = os.getenv("GITHUB_TOKEN")
     if not token:
@@ -29,25 +28,23 @@ def github_api_push(file_path, commit_message):
         return
 
     file_name = os.path.basename(file_path)
-    url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents/shared_data/{file_name}"
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github+json"
-    }
+    api_url = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents/shared_data/{file_name}"
 
     try:
-        # Read and encode file
         with open(file_path, 'rb') as f:
-            encoded = base64.b64encode(f.read()).decode()
+            content = f.read()
+            encoded = base64.b64encode(content).decode()
 
-        # Check if file already exists to get SHA
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json"
+        }
+
         sha = None
-        get_res = requests.get(url, headers=headers)
-        if get_res.status_code == 200:
-            sha = get_res.json().get('sha')
+        get_response = requests.get(api_url, headers=headers)
+        if get_response.status_code == 200:
+            sha = get_response.json().get('sha')
 
-        # Create or update file on GitHub
         payload = {
             "message": commit_message,
             "content": encoded,
@@ -56,17 +53,17 @@ def github_api_push(file_path, commit_message):
         if sha:
             payload["sha"] = sha
 
-        put_res = requests.put(url, headers=headers, json=payload)
-        if put_res.status_code in [200, 201]:
-            print(f"✅ {file_name} pushed to GitHub")
+        put_response = requests.put(api_url, headers=headers, json=payload)
+
+        if put_response.status_code in [200, 201]:
+            print(f"✅ {file_name} pushed to GitHub.")
         else:
-            print(f"❌ Failed to push {file_name}: {put_res.text}")
+            print(f"❌ Failed to push {file_name}: {put_response.text}")
 
     except Exception as e:
-        print(f"❌ Exception pushing {file_name}: {e}")
+        print(f"❌ Exception during GitHub push: {e}")
 
-# === Routes ===
-
+# === Flask Routes ===
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -83,8 +80,8 @@ def send_text():
         with open(TEXT_FILE, 'wb') as f:
             f.write(encrypted)
 
-        github_api_push(TEXT_FILE, f"🔒 Text committed @ {datetime.now().strftime('%H:%M:%S')}")
-        return "✅ Text encrypted and pushed."
+        github_api_push(TEXT_FILE, f"🔒 Encrypted text committed @ {datetime.now().strftime('%H:%M:%S')}")
+        return "✅ Text encrypted and pushed to GitHub."
     except Exception as e:
         return f"❌ Error saving text: {e}"
 
@@ -95,7 +92,7 @@ def upload_audio():
         audio.save(AUDIO_FILE)
 
         github_api_push(AUDIO_FILE, f"🔊 Audio uploaded @ {datetime.now().strftime('%H:%M:%S')}")
-        return "✅ Audio uploaded and pushed."
+        return "✅ Audio uploaded and pushed to GitHub."
     except Exception as e:
         return f"❌ Error uploading audio: {e}"
 
@@ -111,7 +108,7 @@ def set_simulation_flags():
         with open(FLAGS_FILE, 'w') as f:
             json.dump(flags, f)
 
-        github_api_push(FLAGS_FILE, f"🚨 Flags updated @ {datetime.now().strftime('%H:%M:%S')}")
+        github_api_push(FLAGS_FILE, f"🚨 Simulation flags updated @ {datetime.now().strftime('%H:%M:%S')}")
         return jsonify({"status": "flags saved"}), 200
     except Exception as e:
         return jsonify({"status": f"error saving flags: {e}"}), 400
@@ -130,11 +127,11 @@ def set_hopping_config():
         with open(CONFIG_FILE, 'w') as f:
             json.dump(config, f)
 
-        github_api_push(CONFIG_FILE, f"⚙️ Config updated @ {datetime.now().strftime('%H:%M:%S')}")
-        return "✅ Hopping config saved and pushed."
+        github_api_push(CONFIG_FILE, f"⚙️ Hopping config updated @ {datetime.now().strftime('%H:%M:%S')}")
+        return "✅ Hopping config saved and pushed to GitHub."
     except Exception as e:
         return f"❌ Error saving config: {e}"
 
-# === Run App ===
+# === Run Flask App ===
 if __name__ == '__main__':
     app.run(debug=True)
