@@ -22,7 +22,7 @@ REPO_NAME = "flask_hopping"
 BRANCH = "main"
 
 # === GitHub Push Function ===
-def github_api_push(file_path, commit_message):
+def auto_git_push(file_path, commit_message):
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         print("❌ GITHUB_TOKEN not set in environment.")
@@ -83,7 +83,7 @@ def send_text():
         with open(TEXT_FILE, 'wb') as f:
             f.write(encrypted)
 
-        github_api_push(TEXT_FILE, f"🔒 Text committed @ {datetime.now().strftime('%H:%M:%S')}")
+        auto_git_push(TEXT_FILE, f"🔒 Text committed @ {datetime.now().strftime('%H:%M:%S')}")
         return "✅ Text encrypted and pushed."
     except Exception as e:
         return f"❌ Error saving text: {e}"
@@ -94,7 +94,7 @@ def upload_audio():
         audio = request.files['audio']
         audio.save(AUDIO_FILE)
 
-        github_api_push(AUDIO_FILE, f"🔊 Audio uploaded @ {datetime.now().strftime('%H:%M:%S')}")
+        auto_git_push(AUDIO_FILE, f"🔊 Audio uploaded @ {datetime.now().strftime('%H:%M:%S')}")
         return "✅ Audio uploaded and pushed."
     except Exception as e:
         return f"❌ Error uploading audio: {e}"
@@ -111,7 +111,7 @@ def set_simulation_flags():
         with open(FLAGS_FILE, 'w') as f:
             json.dump(flags, f)
 
-        github_api_push(FLAGS_FILE, f"🚨 Flags updated @ {datetime.now().strftime('%H:%M:%S')}")
+        auto_git_push(FLAGS_FILE, f"🚨 Flags updated @ {datetime.now().strftime('%H:%M:%S')}")
         return jsonify({"status": "flags saved"}), 200
     except Exception as e:
         return jsonify({"status": f"error saving flags: {e}"}), 400
@@ -130,7 +130,7 @@ def set_hopping_config():
         with open(CONFIG_FILE, 'w') as f:
             json.dump(config, f)
 
-        github_api_push(CONFIG_FILE, f"⚙️ Config updated @ {datetime.now().strftime('%H:%M:%S')}")
+        auto_git_push(CONFIG_FILE, f"⚙️ Config updated @ {datetime.now().strftime('%H:%M:%S')}")
         return "✅ Hopping config saved and pushed."
     except Exception as e:
         return f"❌ Error saving config: {e}"
