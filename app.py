@@ -17,12 +17,22 @@ GIT_REPO_PATH = os.path.abspath(os.path.join(SHARED_FOLDER, '..'))
 
 def auto_git_push(commit_msg):
     try:
+        # Stage all files
         subprocess.run(["git", "add", "."], cwd=GIT_REPO_PATH, check=True)
+
+        # Check if there is anything to commit
+        result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=GIT_REPO_PATH)
+        if result.returncode == 0:
+            print("ℹ️ No changes to commit.")
+            return
+
+        # Commit and push only if changes exist
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=GIT_REPO_PATH, check=True)
         subprocess.run(["git", "push"], cwd=GIT_REPO_PATH, check=True)
         print("✅ Auto-pushed to GitHub.")
     except subprocess.CalledProcessError as e:
         print(f"❌ Git push failed: {e}")
+
 
 @app.route('/')
 def index():
